@@ -23,7 +23,6 @@ function draw_rect(w,h,line){
 	canvas.width=w
 	canvas.height=h
 	var ctx = canvas.getContext('2d');
-	
 	ctx.fillRect(0,0,w,h);
 	ctx.globalCompositeOperation="destination-out";
 	ctx.fillRect(line,line,w-line*2,h-line*2);
@@ -78,17 +77,53 @@ document.addEventListener('DOMContentLoaded', function(){
 		var file=e.target.files[0]
 		var f=new FileReader;
 		f.onload=function(e){
-			console.log(this.result)
+			var img=new Image;
+			img.onload=function(img){
+				count++;
+				var whxy={
+					x:0,
+					y:0,
+					w:img.naturalWidth,
+					h:img.naturalHeight,
+					source:img
+				};
+				
+				whxys.unshift(whxy)
+				
+				draw_init();
+				
+			}.bind(null,img)
+			img.src=this.result;
+			console.log()
 		}
 		f.readAsDataURL(file);
 	}
+	var shift=false
+	document.onkeydown=function(e){
+		if(e.keyCode==16){
+			shift=true;
+			for(var i=0;i<whxys.length;i++){
+				whxys[i].scale=whxys[i].w/whxys[i].h;
+			}
+		}
+	}
+	document.onkeyup=function(e){
+		if(e.keyCode==16){
+			shift=false;
+			for(var i=0;i<whxys.length;i++){
+				delete whxys[i].scale;
+			}
+		}
+	}
 	
 	var timer;
+	
 	document.onmousedown=function(e){
-		
+		var canvas = document.querySelector("canvas");
 		watch={};
-		watch.x=e.offsetX
-		watch.y=e.offsetY
+		
+		watch.x=e.pageX-canvas.offsetLeft;
+		watch.y=e.pageY-canvas.offsetTop;
 		delete watch.i;
 		for(var j=0;j<tmp_whxys.length;j++){
 			var tmp_whxy=tmp_whxys[j];
@@ -104,10 +139,9 @@ document.addEventListener('DOMContentLoaded', function(){
 			flag.y=watch.y>=y && watch.y<=(y+h)
 			
 			if(flag.x && flag.y){
-				
+				// console.log(flag)
 				if(wh){
 					var func=function(wh,i,plus){
-						
 						if(whxys[i].scale && (wh.x==1 || wh.y==1)){
 							return
 						}
@@ -136,12 +170,14 @@ document.addEventListener('DOMContentLoaded', function(){
 						var tmp={};
 						tmp.w=whxys[i].w;
 						tmp.h=whxys[i].h;
+						
 						if(whxys[i].scale){
 							whxys[i].w=Math.floor(whxys[i].h*whxys[i].scale);
 							if(wh.x==0){
 								whxys[i].x-=whxys[i].w-tmp.w
 							}
 						}
+						
 					}.bind(null,wh,i)
 				}else{
 					var func=function(i,plus){
@@ -206,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function(){
 				whxys[i].source=img;
 				whxys[i].w=img.naturalWidth;
 				whxys[i].h=img.naturalHeight;
-				// whxys[i].scale=whxys[i].w/whxys[i].h;
 				if(whxys.length==count){
 					draw_init();
 				}
