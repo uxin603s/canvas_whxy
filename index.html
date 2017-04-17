@@ -18,6 +18,17 @@ function draw_init(){
 		control(whxy,i)
 	}
 }
+function draw_rect(w,h,line){
+	var canvas = document.createElement("canvas");
+	canvas.width=w
+	canvas.height=h
+	var ctx = canvas.getContext('2d');
+	
+	ctx.fillRect(0,0,w,h);
+	ctx.globalCompositeOperation="destination-out";
+	ctx.fillRect(line,line,w-line*2,h-line*2);
+	return canvas
+}
 function control(whxy,i){
 	var canvas = document.querySelector("canvas");
 	var width=canvas.width
@@ -33,8 +44,12 @@ function control(whxy,i){
 	let w=whxy.w;
 	let h=whxy.h;
 	tmp_whxys.unshift({x:x,y:y,w:w,h:h,i:i});
+	
+	
+	
 	if(watch.i==i){
-		ctx.strokeRect(x,y,w,h);
+		var c=draw_rect(w,h,ctx.lineWidth)
+		ctx.drawImage(c,x,y)
 		var wh_len=3;
 		var wh=w
 		if(w>h){
@@ -47,12 +62,15 @@ function control(whxy,i){
 				if(j==1 && k==1)continue;
 				let wh_x=(w)*j/(wh_len-1)-wh/2+x;
 				let wh_y=(h)*k/(wh_len-1)-wh/2+y;
-				ctx.strokeRect(wh_x,wh_y,wh,wh);
+				// ctx.strokeRect(wh_x,wh_y,wh,wh);
+				var c=draw_rect(wh,wh,ctx.lineWidth)
+				ctx.drawImage(c,wh_x,wh_y)
 				// ctx.fillRect(wh_x,wh_y,wh,wh);
 				tmp_whxys.unshift({x:wh_x,y:wh_y,w:wh,h:wh,i:i,wh:{x:j,y:k}});
 			}
 		}
 	}
+	
 }
 
 document.addEventListener('DOMContentLoaded', function(){
