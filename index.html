@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		watch={};
 		watch.x=e.offsetX
 		watch.y=e.offsetY
+		delete watch.i;
 		for(var j=0;j<tmp_whxys.length;j++){
 			var tmp_whxy=tmp_whxys[j];
 			var x=tmp_whxy.x;
@@ -131,13 +132,13 @@ document.addEventListener('DOMContentLoaded', function(){
 					}.bind(null,i)
 				}
 				
-				
+				watch.i=i;
 				break;
 			}
 		}
 		tmp_whxys=[];
 		watch.func=func;
-		watch.i=i;
+		
 		var canvas = document.querySelector("canvas");
 		var ctx = canvas.getContext('2d');
 		ctx.clearRect(0,0,canvas.width,canvas.height);
