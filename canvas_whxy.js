@@ -44,12 +44,13 @@ canvas_whxy.prototype.draw_all=function(){
 	let scale = this.scale;
 	let ctx = canvas.getContext('2d');
 	ctx.clearRect(0,0,canvas.width,canvas.height);
-	for(let i=(whxys.length-1);i>=0;i--){
+	let len=(whxys.length-1)
+	for(let i=len;i>=0;i--){
 		let whxy=whxys[i];
-		let x=whxy.x*scale;
-		let y=whxy.y*scale;
-		let w=whxy.w*scale;
-		let h=whxy.h*scale;
+		let x=Math.floor(whxy.x*scale);
+		let y=Math.floor(whxy.y*scale);
+		let w=Math.floor(whxy.w*scale);
+		let h=Math.floor(whxy.h*scale);
 		ctx.drawImage(whxy.source,x,y,w,h)
 		this.control(whxy,i);
 	}
@@ -59,8 +60,8 @@ canvas_whxy.prototype.control=function(whxy,i){
 	let scale = this.scale;
 	let canvas = this.canvas;	
 	let ctx = canvas.getContext('2d');
-	ctx.fillStyle="rgb(0,0,0)";
-	ctx.strokeStyle="rgb(0,0,0)";
+	// ctx.fillStyle="rgb(0,0,0)";
+	// ctx.strokeStyle="rgb(123,123,123)";
 	ctx.lineWidth=10;
 	let x=whxy.x*scale;
 	let y=whxy.y*scale;
@@ -80,9 +81,9 @@ canvas_whxy.prototype.control=function(whxy,i){
 				let wh_x=(w)*j/(wh_len-1)-wh/2+x;
 				let wh_y=(h)*k/(wh_len-1)-wh/2+y;
 				// ctx.strokeRect(wh_x,wh_y,wh,wh);
-				let c=this.draw_rect(wh,wh,ctx.lineWidth)
+				
+				let c=this.draw_rect(wh,wh,ctx.lineWidth);
 				ctx.drawImage(c,wh_x,wh_y)
-				// ctx.fillRect(wh_x,wh_y,wh,wh);
 				this.tmp_whxys.unshift({x:wh_x,y:wh_y,w:wh,h:wh,i:i,wh:{x:j,y:k}});
 			}
 		}
@@ -93,6 +94,7 @@ canvas_whxy.prototype.draw_rect=function (w,h,line){
 	canvas.width=w
 	canvas.height=h
 	var ctx = canvas.getContext('2d');
+	ctx.fillStyle="rgb(123,123,123)";
 	ctx.fillRect(0,0,w,h);
 	ctx.globalCompositeOperation="destination-out";
 	ctx.fillRect(line,line,w-line*2,h-line*2);
@@ -116,16 +118,25 @@ canvas_whxy.prototype.shift_scale=function(){
 }
 canvas_whxy.prototype.watch_control=function(){
 	var start=function(e){
-		console.log('start')
+		// document.body.setAttribute("style","overflow: hidden;")
+		e.preventDefault();
+		// document.querySelector("#message").innerHTML=e.type
 		var canvas = this.canvas;
-		this.watch.x=e.pageX-canvas.offsetLeft;
-		this.watch.y=e.pageY-canvas.offsetTop;
+		var page={};
+		if(e.type=="mousedown"){
+			page.x=e.pageX;
+			page.y=e.pageY;
+		}else if(e.type=="touchstart"){
+			page.x=e.touches[0].pageX;
+			page.y=e.touches[0].pageY;
+		}
 		
-		this.watch.x*=this.scale;
-		this.watch.y*=this.scale;
-		// console.log(this.watch.y)
+		this.watch.x=(page.x-canvas.offsetLeft);
+		this.watch.y=(page.y-canvas.offsetTop);
+		
 		delete this.watch.i;
-		for(var j=0;j<this.tmp_whxys.length;j++){
+		var len=this.tmp_whxys.length
+		for(var j=0;j<len;j++){
 			var tmp_whxy=this.tmp_whxys[j];
 			var x=tmp_whxy.x;
 			var y=tmp_whxy.y;
@@ -141,29 +152,30 @@ canvas_whxy.prototype.watch_control=function(){
 			if(flag.x && flag.y){
 				if(wh){
 					var func=function(whxys,wh,i,plus){
+						
 						if(whxys[i].scale && (wh.x==1 || wh.y==1)){
 							return
 						}
 						if(wh.x==0){
 							if(whxys[i].w-plus.w>0){
-								whxys[i].x+=plus.w
-								whxys[i].w-=plus.w
+								whxys[i].x+=Math.floor(plus.w/this.scale)
+								whxys[i].w-=Math.floor(plus.w/this.scale)
 							}
 						}else if(wh.x==2){
 							if(whxys[i].w+plus.w>0){
-								whxys[i].w+=plus.w
+								whxys[i].w+=Math.floor(plus.w/this.scale)
 							}
 						}
 						
 						
 						if(wh.y==0){
 							if(whxys[i].h-plus.h>0){
-								whxys[i].y+=plus.h
-								whxys[i].h-=plus.h
+								whxys[i].y+=Math.floor(plus.h/this.scale)
+								whxys[i].h-=Math.floor(plus.h/this.scale)
 							}
 						}else if(wh.y==2){
 							if(whxys[i].h+plus.h>0){
-								whxys[i].h+=plus.h
+								whxys[i].h+=Math.floor(plus.h/this.scale)
 							}
 						}
 						var tmp={};
@@ -180,8 +192,8 @@ canvas_whxy.prototype.watch_control=function(){
 					}.bind(this,this.whxys,wh,i)
 				}else{
 					var func=function(whxys,i,plus){
-						whxys[i].x+=plus.w;
-						whxys[i].y+=plus.h;
+						whxys[i].x+=plus.w/this.scale;
+						whxys[i].y+=plus.h/this.scale;
 					}.bind(this,this.whxys,i)
 				}
 				this.watch.move=i;
@@ -189,49 +201,85 @@ canvas_whxy.prototype.watch_control=function(){
 				break;
 			}
 		}
-		this.tmp_whxys=[];
+		this.tmp_whxys.length=0;
 		this.watch.func=func;
 		this.draw_all()
+		// document.querySelector("#x").innerHTML=this.whxys[this.watch.i].x;
+		// document.querySelector("#y").innerHTML=this.whxys[this.watch.i].y;
+		// document.querySelector("#w").innerHTML=this.whxys[this.watch.i].w;
+		// document.querySelector("#h").innerHTML=this.whxys[this.watch.i].h;
 	}
 	var timer;
 	var move=function(e){
-		if(isNaN(this.watch.move))return;
-		console.log(123)
+		e.preventDefault();
+		var watch=this.watch
+		var canvas=this.canvas;
+		if(isNaN(watch.move))return;
+		
+		
+		
+		
+		// document.querySelector("#message").innerHTML=e.type
+		
+			
+		var page={};
+		if(e.type=="mousemove"){
+			page.x=e.pageX;
+			page.y=e.pageY;
+		}else if(e.type=="touchmove"){
+			page.x=e.touches[0].pageX;
+			page.y=e.touches[0].pageY;
+		}
+		
+			
+			
+		var x=page.x-canvas.offsetLeft;
+		var y=page.y-canvas.offsetTop;
+		var plus={};
+		plus.w=Math.floor(x-watch.x);
+		plus.h=Math.floor(y-watch.y);
+		
+		watch.func && watch.func(plus)
+		
+		watch.x+=plus.w;
+		watch.y+=plus.h;
+		// document.querySelector("#x").innerHTML=this.whxys[this.watch.i].x;
+		// document.querySelector("#y").innerHTML=this.whxys[this.watch.i].y;
+		// document.querySelector("#w").innerHTML=this.whxys[this.watch.i].w;
+		// document.querySelector("#h").innerHTML=this.whxys[this.watch.i].h;
+		// document.querySelector("#p_w").innerHTML=plus.w;
+		// document.querySelector("#p_h").innerHTML=plus.h;
+		// document.querySelector("#page").innerHTML=page.x+','+page.y;
+		
+		
+		
+		var canvas = this.canvas;
+		var w=canvas.width;
+		var h=canvas.height;
+		// console.log(plus)
 		clearTimeout(timer)
-		timer=setTimeout(function(watch){
-			var canvas = this.canvas;
-			var y=e.pageY-canvas.offsetTop
-			var x=e.pageX-canvas.offsetLeft
-			
-			var plus={};
-			plus.w=x-watch.x;
-			plus.h=y-watch.y;
-			
-			watch.func && watch.func(plus)
-			watch.x+=plus.w;
-			watch.y+=plus.h;
-			
-			var w=canvas.width;
-			var h=canvas.height;
-			
+		timer=setTimeout(function(e){
+			// if(plus.w+plus.h<1)return
 			var ctx = canvas.getContext('2d');
 			ctx.clearRect(0,0,w,h);
 			this.draw_all()
-		}.bind(this,this.watch),0)
+		}.bind(this,e),0);
 	}
 	var end=function(e){
-		console.log('end')
+		// document.body.removeAttribute("style")
+		// document.querySelector("#message").innerHTML=e.type
+		// console.log('end')
 		delete this.watch.move;
 	}
-	document.ontouchstart=start.bind(this);
-	document.onmousedown=start.bind(this);
-	
-	document.onmouseup=end.bind(this)
-	document.ontouchend=end.bind(this)
-	
-	document.onmousemove=move.bind(this)
-	document.ontouchmove=move.bind(this)
-	// console.dir(document)
+	if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+		document.body.ontouchstart=start.bind(this);
+		document.body.ontouchend=end.bind(this)
+		document.body.ontouchmove=move.bind(this);
+	}else{
+		document.body.onmousedown=start.bind(this);
+		document.body.onmouseup=end.bind(this);
+		document.body.onmousemove=move.bind(this);
+	}
 }
 canvas_whxy.prototype.watch_key=function(){
 	var count=1;
